@@ -1,0 +1,27 @@
+name: Docker Build Smarte Edge
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Login to GitHub Package Registry
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: "${{ github.repository_owner }}"
+        password: ${{ secrets.GHCR_TOKEN }}
+    - name: install buildx
+      id: buildx
+      uses: crazy-max/ghaction-docker-buildx@v3
+      with:
+        version: latest
+    - name: docker build noderededgemodule_bluegit module
+      run: |
+          cd node-red-contrib-azure-iot-edge-module
+          docker buildx build --push \
+              -t ghcr.io/${{ github.repository_owner }}/noderededgemodule_bluegit:latest \
+              --platform linux/amd64,linux/arm64  .
+
