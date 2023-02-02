@@ -1,0 +1,103 @@
+{
+    "modulesContent": {
+        "$edgeAgent": {
+            "properties.desired": {
+                "schemaVersion": "1.1",
+                "runtime": {
+                    "type": "docker",
+                    "settings": {
+                        "minDockerVersion": "v1.25",
+                        "loggingOptions": "",
+                        "registryCredentials": {}
+                    }
+                },
+                "systemModules": {
+                    "edgeAgent": {
+                        "type": "docker",
+                        "settings": {
+                            "image": "mcr.microsoft.com/azureiotedge-agent:1.1",
+                            "createOptions": "{}"
+                        }
+                    },
+                    "edgeHub": {
+                        "type": "docker",
+                        "status": "running",
+                        "restartPolicy": "always",
+                        "settings": {
+                            "image": "mcr.microsoft.com/azureiotedge-hub:1.1",
+                            "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"5671/tcp\":[{\"HostPort\":\"5671\"}],\"8883/tcp\":[{\"HostPort\":\"8883\"}],\"443/tcp\":[{\"HostPort\":\"443\"}]}}}"
+                        }
+                    }
+                },
+                "modules": {
+                    "AzureMonitorForIotEdgeModule": {
+                        "settings": {
+                            "image": "mcr.microsoft.com/azureiotedge-metrics-collector:1.0",
+                            "createOptions": "{\"HostConfig\":{\"LogConfig\":{\"Type\":\"json-file\",\"Config\":{\"max-size\":\"4m\",\"max-file\":\"7\"}}}}"
+                        },
+                        "type": "docker",
+                        "env": {
+                            "UploadTarget": {
+                                "value": "IotMessage"
+                            },
+                            "ResourceId": {
+                                "value": "/subscriptions/{your subscription id}/IOTC/providers/Microsoft.IoTCentral/IoTApps/{your app name}"
+                            },
+                            "MetricsEndpointsCSV": {
+                                "value": "http://edgeHub:9600/metrics,http://edgeAgent:9600/metrics"
+                            },
+                            "ScrapeFrequencyInSecs": {
+                                "value": "3600"
+                            },
+                            "AllowedMetrics": {
+                                "value": ""
+                            },
+                            "BlockedMetrics": {
+                                "value": ""
+                            },
+                            "CompressForUpload": {
+                                "value": "false"
+                            },
+                            "TransformForIoTCentral": {
+                                "value": "true"
+                            }
+                        },
+                        "status": "running",
+                        "restartPolicy": "always",
+                        "version": "1.0"
+                    },
+                    "nodered": {
+                        "version": "1.0",
+                        "type": "docker",
+                        "status": "running",
+                        "restartPolicy": "always",
+                        "settings": {
+                            "image": "iotblackbelt/noderededgemodule:1.0.2-amd64",
+                            "createOptions": "{\"ExposedPorts\":{\"50110/udp\":{},\"50111/udp\":{},\"50112/udp\":{}},\"HostConfig\":{\"Privileged\":true,\"Binds\":[\"/node-red:/data\"],\"PortBindings\":{\"1880/tcp\":[{\"HostPort\":\"1880\"}],\"50110/udp\":[{\"HostPort\":\"50110\"}],\"50111/udp\":[{\"HostPort\":\"50111\"}],\"50112/udp\":[{\"HostPort\":\"50112\"}]}}}"
+                        }
+                    }
+                }
+            }
+        },
+        "$edgeHub": {
+            "properties.desired": {
+                "schemaVersion": "1.1",
+                "routes": {
+                    "metricupload": "FROM /messages/modules/AzureMonitorForIotEdgeModule/outputs/metricOutput INTO $upstream",
+                    "noderedToIoTHub": "FROM /messages/modules/nodered/outputs/* INTO $upstream"
+                },
+                "storeAndForwardConfiguration": {
+                    "timeToLiveSecs": 7200
+                }
+            }
+        },
+        "AzureMonitorForIotEdgeModule": {
+            "properties.desired": {
+                "schemaVersion": "1.0",
+                "scrapeFrequencySecs": 3600,
+                "metricsFormat": "Json",
+                "syncTarget": "IoTHub"
+            }
+        }
+    }
+}
