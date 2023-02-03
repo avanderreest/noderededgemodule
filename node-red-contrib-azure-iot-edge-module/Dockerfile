@@ -2,7 +2,8 @@ FROM nodered/node-red:latest
 USER root
 
 # Install Python
-RUN apk add py3-pip py3-numpy py3-pandas py3-scikit-learn
+# RUN apk add py3-pip py3-numpy py3-pandas py3-scikit-learn
+RUN npm install node-red-node-python
 RUN pip install pynmea
 RUN pip install pyais
 
